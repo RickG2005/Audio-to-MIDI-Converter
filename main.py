@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Load the audio
-y, sr = librosa.load("samples/Unravel.wav")
+y, sr = librosa.load("samples/Unravel.wav", duration=10)
 print("Sample rate:", sr)
 print("Audio length (in seconds):", len(y)/sr)
 
@@ -28,7 +28,9 @@ for i in range(0, pitches.shape[1], 10):    #loop
     index = magnitudes[:, i].argmax()   #selects max magnitude of freq bin in i time frame
     pitch = pitches[index, i]   #converts to pitch
     if pitch > 0:
-        print(f"Time step {i}, Pitch: {pitch:.2f} Hz")      #displays pitch for time frame rounded to two dec places
+        midi = librosa.hz_to_midi(pitch)
+        note = librosa.midi_to_note(midi)
+        print(f"Time {i}, Pitch: {pitch:.2f} Hz, Note: {note}")
 
 # Plotting the spectrogram
 S_db = librosa.amplitude_to_db(S, ref=np.max)
@@ -40,3 +42,4 @@ plt.xlabel("Time (s)")
 plt.ylabel("Frequency (Hz)")
 plt.tight_layout()
 plt.show()
+
