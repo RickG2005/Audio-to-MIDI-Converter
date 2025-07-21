@@ -29,3 +29,14 @@ for i in range(0, pitches.shape[1], 10):    #loop
     pitch = pitches[index, i]   #converts to pitch
     if pitch > 0:
         print(f"Time step {i}, Pitch: {pitch:.2f} Hz")      #displays pitch for time frame rounded to two dec places
+
+# Plotting the spectrogram
+S_db = librosa.amplitude_to_db(S, ref=np.max)
+plt.figure(figsize=(14,6))
+librosa.display.specshow(S_db, sr=sr, x_axis='time', y_axis='log', cmap='magma')
+plt.colorbar(format="%+2.0f dB")
+plt.title("Spectrogram (dB)")
+plt.xlabel("Time (s)")
+plt.ylabel("Frequency (Hz)")
+plt.tight_layout()
+plt.show()
