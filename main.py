@@ -5,7 +5,7 @@ import numpy as np
 
 
 # Load the audio
-y, sr = librosa.load("samples/Unravel.wav", duration=10)
+y, sr = librosa.load("samples/Unravel.wav")
 print("Sample rate:", sr)
 print("Audio length (in seconds):", len(y)/sr)
 
@@ -27,13 +27,12 @@ pitches, magnitudes = librosa.piptrack(S=S, sr=sr, fmin=librosa.note_to_hz('C2')
 # Loop through each frame
 times = librosa.frames_to_time(np.arange(pitches.shape[1]), sr=sr)
 detected_notes = []
-for i in range(0, pitches.shape[1], 10):    #loop
+for i in range(0, pitches.shape[1], 50):    #loop
     index = magnitudes[:, i].argmax()   #selects max magnitude of freq bin in i time frame
     pitch = pitches[index, i]   #converts to pitch
     if pitch > 0:
         midi = librosa.hz_to_midi(pitch)
         note_name = librosa.midi_to_note(midi)
-        print(f"Time {i}, Pitch: {pitch:.2f} Hz, Note: {note_name}")
         detected_notes.append((times[i], int(round(midi)), note_name))
 
 # Plotting the spectrogram
@@ -47,13 +46,32 @@ plt.ylabel("Frequency (Hz)")
 plt.tight_layout()
 plt.show()
 
+# Groups time intervals together for the same note
+grouped_notes = []
+prev_note = None
+start_time = None
+for i, (times, midi_notes, note_name) in enumerate(detected_notes):
+    if note_name != prev_note:
+        if prev_note is not None:
+            grouped_notes.append((prev_note, start_time, times))
+        start_time = times
+        prev_note = note_name
+
+if prev_note is not None:
+    end_time = detected_notes[-1][0] + (detected_notes[-1][0]-detected_notes[-2][0])
+    grouped_notes.append((prev_note, start_time, end_time))
+
+for note, start_time, end_time in grouped_notes:
+    duration = end_time - start_time
+    print(f"{note}: {start_time:.2f} (duration = {duration:.2f})")
+
 # Plot midi notes against time
-times, midi_notes, note_name = zip(*detected_notes)
 plt.figure(figsize=(12,5))
-plt.scatter(times, midi_notes, color = "blue", s = 8)
-for t,m,n in zip(times, midi_notes, note_name):
-    plt.text(t, m+0.5, n)
-plt.title("Detected MIDI notes over time")
+for prev_note, start_time, end_time in grouped_notes:
+    midi = librosa.note_to_midi(prev_note)
+    plt.hlines(midi, start_time, end_time, colors="blue", linewidth = 4) 
+    plt.text((start_time + end_time)/2, midi + 0.5, prev_note, ha = "center", va = "bottom", fontsize = 8)
+plt.title("MIDI notes over time")
 plt.xlabel("Time(s)")
 plt.ylabel("MIDI note")
 plt.grid(True)
